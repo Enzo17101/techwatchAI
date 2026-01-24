@@ -6,6 +6,7 @@ import com.rometools.rome.io.SyndFeedInput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.xml.sax.InputSource;
 import techwatch.ai.orchestrator.entity.Article;
@@ -91,5 +92,11 @@ public class RssService {
             articleRepository.save(article);
             log.debug("Article sauvegardé : {}", article.getTitle());
         }
+    }
+
+    @Scheduled(fixedRate = 3600000) // Toutes les heures (en ms)
+    public void scheduleFeedUpdate() {
+        log.info("Lancement du scan automatique RSS...");
+        fetchRssFeed("https://www.lemondeinformatique.fr/flux-rss/thematique/toute-l-actualite/rss.xml");
     }
 }
