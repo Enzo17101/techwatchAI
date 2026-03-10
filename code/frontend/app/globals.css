@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* Core design tokens and color mapping */
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -37,6 +38,7 @@
 }
 
 @layer base {
+  /* Default theme configuration */
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -59,6 +61,8 @@
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
   }
+
+  /* Dark mode overrides */
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -82,11 +86,12 @@
   }
 }
 
-/* Remplacement officiel de V4 pour ne plus utiliser @apply border-border */
 @layer base {
+  /* Standard Tailwind v4 replacement for legacy @apply border-border */
   *, ::after, ::before, ::backdrop, ::file-selector-button {
     border-color: var(--color-border, currentColor);
   }
+  
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);

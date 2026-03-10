@@ -1,8 +1,10 @@
--- 1. On nettoie pour être sûr de repartir sur une base saine
+-- Ensure a clean state for initialization
 DROP TABLE IF EXISTS articles;
 
--- 2. Activer l'extension vectorielle
--- 3. Créer la table avec TOUTES les colonnes (Java + Python)
+-- Enable the pgvector extension for semantic search
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Create the main articles table supporting both metadata and vector embeddings
 CREATE TABLE articles (
     id UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -12,5 +14,5 @@ CREATE TABLE articles (
     pub_date TIMESTAMP,
     full_content TEXT,
     created_at TIMESTAMP,
-    embedding vector(768) -- La colonne critique pour l'IA
+    embedding vector(768)
 );

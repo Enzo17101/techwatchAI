@@ -14,7 +14,7 @@ export function ChatInterface() {
     { 
       id: '1', 
       role: 'assistant', 
-      content: "Bonjour ! L'interface est prête et 100% sous notre contrôle. Posez-moi une question !" 
+      content: "Welcome! The RAG system is active and ready to process your queries. How can I help you today?" 
     }
   ]);
   const [input, setInput] = useState('');
@@ -22,7 +22,7 @@ export function ChatInterface() {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll vers le bas quand un message arrive
+  // Automatically scroll to the latest message when the chat updates
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -33,34 +33,30 @@ export function ChatInterface() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    // 1. On prépare le message utilisateur
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: input.trim()
     };
 
-    // 2. Mise à jour de l'UI
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
-      // 3. Appel à notre routeur Next.js (le "Pont" qu'on a créé dans /api/chat/route.ts)
+      // Forward request to the Next.js API route acting as a bridge to the Python backend
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, userMessage] // On envoie l'historique complet
+          messages: [...messages, userMessage]
         })
       });
 
-      if (!response.ok) throw new Error("Erreur réseau");
+      if (!response.ok) throw new Error("Network response was not ok");
 
-      // 4. On lit la réponse texte
       const data = await response.text();
 
-      // 5. On ajoute la réponse de l'IA à l'historique
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -68,11 +64,11 @@ export function ChatInterface() {
       }]);
 
     } catch (error) {
-      console.error("Erreur lors de l'envoi:", error);
+      console.error("Failed to send message:", error);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "Désolé, la communication avec le serveur a échoué. L'API est-elle démarrée ?"
+        content: "I'm sorry, communication with the server failed. Please ensure the backend services are running."
       }]);
     } finally {
       setIsLoading(false);
@@ -116,7 +112,7 @@ export function ChatInterface() {
             </div>
             <div className="px-5 py-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-tl-none flex items-center gap-2 text-slate-500">
               <Loader2 className="animate-spin" size={16} />
-              <span className="text-xs">L&apos;IA réfléchit...</span>
+              <span className="text-xs">Thinking...</span>
             </div>
           </div>
         )}
@@ -126,7 +122,7 @@ export function ChatInterface() {
         <input 
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ex: Y a-t-il eu des annonces sur l'IA aujourd'hui ?"
+          placeholder="Ask a question about recent tech news..."
           className="w-full pl-5 pr-14 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 shadow-lg dark:text-white transition-all disabled:opacity-50"
           disabled={isLoading}
         />

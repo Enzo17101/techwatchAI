@@ -7,8 +7,11 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
-  const formattedDate = new Date(article.pubDate).toLocaleDateString('fr-FR', {
-    day: 'numeric', month: 'short', year: 'numeric'
+  // Format date using US locale for international consistency
+  const formattedDate = new Date(article.pubDate).toLocaleDateString('en-US', {
+    day: 'numeric', 
+    month: 'short', 
+    year: 'numeric'
   });
 
   return (
@@ -23,16 +26,17 @@ export function ArticleCard({ article }: ArticleCardProps) {
           </span>
         </div>
         
-        {/* CORRECTION : Utilisation de dangerouslySetInnerHTML pour décoder les entités HTML du titre */}
+        {/* RSS feeds often contain HTML entities (e.g., &amp;, &quot;). 
+          We use dangerouslySetInnerHTML to ensure correct character rendering.
+        */}
         <h3 
           className="font-bold text-slate-900 dark:text-slate-100 leading-snug mb-3 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
           dangerouslySetInnerHTML={{ __html: article.title }}
         />
         
-        {/* CORRECTION : Utilisation de dangerouslySetInnerHTML pour la description et passage en <div> */}
         <div 
           className="text-slate-500 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: article.description || "Aucun résumé fourni par la source." }}
+          dangerouslySetInnerHTML={{ __html: article.description || "No description provided by the source." }}
         />
         
       </div>
@@ -43,7 +47,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
           rel="noopener noreferrer"
           className="text-blue-600 dark:text-blue-400 text-sm font-semibold flex items-center gap-1.5 hover:gap-2 transition-all mt-4 w-max"
         >
-          Lire l'article complet <ExternalLink size={14} />
+          Read full article <ExternalLink size={14} />
         </a>
       </div>
     </div>

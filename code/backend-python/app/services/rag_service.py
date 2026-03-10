@@ -1,72 +1,48 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import text
 import logging
-
-from app.services.ai_service import AiService
+import requests
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-class RagService:
-    def __init__(self, db: Session):
-        self.db = db
-        self.ai_service = AiService()
-        self.content_size = 4000
+class ScraperService:
+    """
+    Service responsible for fetching and cleaning web page content.
+    """
 
-    def search_and_answer(self, question: str) -> str:
+    def scrape_url(self, url: str) -> dict:
         """
-        Le pipeline complet du RAG (Retrieval-Augmented Generation)
+        Downloads the page at the given URL and extracts its main text content.
         """
-        logger.info(f"RAG: Nouvelle question reçue -> '{question}'")
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (compatible; TechWatch-AI/1.0; +http://localhost)"
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
 
-        # 1. RETRIEVAL : Transformer la question en vecteur (Embedding)
-        logger.info("RAG: Génération du vecteur pour la question...")
-        question_vector = self.ai_service.generate_embedding(question)
+            soup = BeautifulSoup(response.content, "lxml")
 
-        if not question_vector:
-            return "Désolé, je n'ai pas pu comprendre votre question."
+            # Remove non-content tags to prevent indexing noise
+            unwanted_tags = ["script", "style", "nav", "footer", "header", "aside", "iframe", "noscript"]
+            for tag in soup(unwanted_tags):
+                tag.decompose()
 
-        # Convertir la liste de float en string pour la requête SQL pgvector
-        # Format attendu par pgvector : '[0.1, 0.2, -0.5, ...]'
-        vector_str = f"[{','.join(map(str, question_vector))}]"
+            title = soup.title.string.strip() if soup.title else None
 
-        # 2. RETRIEVAL : Chercher les 3 articles les plus proches dans la base de données
-        # On utilise l'opérateur `<->` de pgvector qui calcule la distance cosinus (L2 distance)
-        # On ne prend que les articles qui ont un vecteur (embedding IS NOT NULL)
-        logger.info("RAG: Recherche des articles similaires dans PostgreSQL (pgvector)...")
+            raw_text = soup.get_text(separator=" ", strip=True)
+            clean_text = " ".join(raw_text.split())
 
-        query = text("""
-            SELECT title, source_name, full_content 
-            FROM articles 
-            WHERE embedding IS NOT NULL 
-            ORDER BY embedding <-> :vector 
-            LIMIT 3
-        """)
+            logger.info("Successfully scraped %s (%d chars)", url, len(clean_text))
 
-        results = self.db.execute(query, {"vector": vector_str}).fetchall()
+            return {
+                "url": url,
+                "title": title,
+                "content": clean_text
+            }
 
-        if not results:
-            logger.warning("RAG: Aucun article avec vecteur trouvé dans la base.")
-            return "Désolé, ma base de données d'articles semble vide ou en cours d'indexation. Veuillez réessayer plus tard."
-
-        # 3. AUGMENTATION : Préparer le contexte
-        logger.info(f"RAG: {len(results)} articles pertinents trouvés. Préparation du contexte.")
-        context = ""
-        for row in results:
-            title = row[0]
-            source = row[1]
-            content = row[2]
-            print("content size : ", len(content))
-            print("content : ", content)
-
-            # On tronque le contenu de chaque article pour ne pas exploser la mémoire du LLM
-            truncated_content = content[:self.content_size] + "..." if content and len(content) > self.content_size else (content or "")
-
-            context += f"\n--- Article : {title} (Source: {source}) ---\n"
-            context += f"{truncated_content}\n"
-
-        # 4. GENERATION : Demander à l'IA de répondre
-        logger.info("RAG: Demande de génération de la réponse au LLM...")
-        answer = self.ai_service.generate_answer(question, context)
-
-        logger.info("RAG: Réponse générée avec succès.")
-        return answer
+        except requests.RequestException as e:
+            logger.error("Network error while scraping %s: %s", url, e)
+            raise Exception(f"Failed to fetch URL: {str(e)}")
+        except Exception as e:
+            logger.error("Parsing error for %s: %s", url, e)
+            raise Exception(f"Failed to parse content: {str(e)}")

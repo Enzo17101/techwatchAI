@@ -18,26 +18,24 @@ public class ResilienceService {
     private final PythonClient pythonClient;
 
     /**
-     * Le "Balayeur" (Sweep Job).
-     * Tourne toutes les 2 heures (7200000 ms), 5 minutes après le démarrage (300000 ms).
-     * Son rôle est de trouver les articles oubliés ou plantés et de les relancer.
+     * Background sweep job designed to find and retrigger articles that failed processing.
+     * Runs every 2 hours, with an initial delay of 5 minutes after startup.
      */
     @Scheduled(initialDelay = 300000, fixedRate = 7200000)
     public void retryIncompleteArticles() {
-        log.info("Starting Resilience Sweep: Looking for incomplete articles in DB...");
+        log.info("Starting resilience sweep: Scanning database for incomplete articles...");
 
         List<Article> incompleteArticles = articleRepository.findIncompleteArticles();
 
         if (incompleteArticles.isEmpty()) {
-            log.info("Resilience Sweep finished: All articles are fully processed. Good job!");
+            log.info("Resilience sweep completed: No pending or failed articles found.");
             return;
         }
 
-        log.warn("Resilience Sweep found {} incomplete articles. Retriggering AI processing...", incompleteArticles.size());
+        log.warn("Resilience sweep identified {} incomplete articles. Triggering AI processing retries...", incompleteArticles.size());
 
         for (Article article : incompleteArticles) {
-            log.debug("Retrying article: {}", article.getTitle());
-            // Appel asynchrone vers Python
+            log.debug("Scheduling retry for article ID: {}", article.getId());
             pythonClient.triggerEnrichment(article.getId());
         }
     }

@@ -1,20 +1,21 @@
 services:
-  # Service Base de Données
-  # Nous utilisons l'image officielle pgvector pour avoir PostgreSQL 16 + l'extension vectorielle pré-installée.
+  # Database Service
+  # Uses the official pgvector image providing PostgreSQL 16 with the 
+  # vector extension pre-installed for RAG capabilities.
   postgres:
     image: pgvector/pgvector:pg16
     container_name: techwatch-postgres
     ports:
-      - "5432:5432" # Expose le port par défaut pour tes outils locaux (DBeaver, etc.)
+      - "5432:5432"
     environment:
       - POSTGRES_USER=techwatch
       - POSTGRES_PASSWORD=techwatchpass
       - POSTGRES_DB=techwatchdb
     volumes:
-      # Persistance des données : si tu éteins le conteneur, les données restent.
+      # Persistent storage configuration to maintain data across container lifecycles.
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      # Cette commande permet à Docker de savoir si la base est "prête" à recevoir des connexions
+      # Ensures the database is fully initialized and ready to accept connections.
       test: ["CMD-SHELL", "pg_isready -U techwatch -d techwatchdb"]
       interval: 5s
       timeout: 5s
@@ -23,11 +24,9 @@ services:
     networks:
       - techwatch-network
 
-# Définition des volumes persistants
 volumes:
   postgres_data:
 
-# Définition d'un réseau dédié pour que nos futurs conteneurs (Java, Python) puissent se parler
 networks:
   techwatch-network:
     driver: bridge

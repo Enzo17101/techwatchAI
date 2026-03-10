@@ -51,7 +51,7 @@ public class RssService {
             HttpResponse<InputStream> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
             if (response.statusCode() != 200) {
-                log.warn("Feed unreachable [{}]. Status: {}", feedUrl, response.statusCode());
+                log.warn("RSS Feed unreachable [{}]. HTTP Status: {}", feedUrl, response.statusCode());
                 return;
             }
 
@@ -59,7 +59,7 @@ public class RssService {
                 SyndFeedInput input = new SyndFeedInput();
                 SyndFeed feed = input.build(new InputSource(stream));
 
-                log.info("Feed read: {} ({} articles found)", feed.getTitle(), feed.getEntries().size());
+                log.info("Successfully read feed: {} ({} articles found)", feed.getTitle(), feed.getEntries().size());
 
                 for (SyndEntry entry : feed.getEntries()) {
                     processArticle(feed, entry);
@@ -67,7 +67,7 @@ public class RssService {
             }
 
         } catch (InterruptedException e) {
-            log.error("RSS retrieval thread was interrupted for {}", feedUrl);
+            log.error("RSS retrieval thread was interrupted for URL: {}", feedUrl);
             Thread.currentThread().interrupt();
         } catch (IOException e) {
             log.error("Network or I/O error while reading feed {}: {}", feedUrl, e.getMessage());
@@ -82,7 +82,6 @@ public class RssService {
         Optional<Article> existingArticleOpt = articleRepository.findByLink(entry.getLink());
 
         if (existingArticleOpt.isEmpty()) {
-            // L'article n'existe pas (Nouveau) -> On le crée et on lance le traitement
             String description = (entry.getDescription() != null) ? entry.getDescription().getValue() : "";
             LocalDateTime pubDate = resolvePublicationDate(entry);
 
@@ -95,13 +94,14 @@ public class RssService {
                     .build();
 
             articleRepository.save(newArticle);
-            log.info("New article saved: {}. Triggering AI processing...", newArticle.getTitle());
+            log.info("Persisted new article: {}. Triggering async AI enrichment.", newArticle.getTitle());
+            
             pythonClient.triggerEnrichment(newArticle.getId());
 
         } else {
-            // L'article existe déjà. On ne fait rien.
-            // Si son contenu est vide (erreur Python), le ResilienceService s'en chargera plus tard.
-            log.debug("Article already exists in DB: {}", entry.getTitle());
+            // Article is already known. If enrichment previously failed, 
+            // the ResilienceService will handle the retry asynchronously.
+            log.debug("Skipping existing article: {}", entry.getTitle());
         }
     }
 
@@ -110,15 +110,15 @@ public class RssService {
         if (date == null) {
             date = entry.getUpdatedDate();
         }
-        if (date != null) {
-            return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        }
-        return LocalDateTime.now();
+        
+        return (date != null) 
+            ? date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() 
+            : LocalDateTime.now();
     }
 
     @Scheduled(initialDelay = 2000, fixedRate = 3600000)
     public void scheduleFeedUpdate() {
-        log.info("Starting automatic RSS scan...");
+        log.info("Initiating automatic RSS sweep...");
         fetchRssFeed("https://www.lemondeinformatique.fr/flux-rss/thematique/toute-l-actualite/rss.xml");
     }
 }

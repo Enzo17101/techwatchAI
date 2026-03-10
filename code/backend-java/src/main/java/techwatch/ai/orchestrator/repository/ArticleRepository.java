@@ -14,8 +14,10 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
 
     Optional<Article> findByLink(String link);
 
-    // NOUVEAU : Trouve les articles dont le contenu complet n'a pas encore été scrapé.
-    // On limite à 50 pour ne pas surcharger Python d'un seul coup s'il y a un gros arriéré.
+    /**
+     * Retrieves a batch of articles that haven't been fully scraped yet.
+     * Limited to 50 to prevent downstream processing bottlenecks.
+     */
     @Query(value = "SELECT * FROM articles WHERE full_content IS NULL OR full_content = '' LIMIT 50", nativeQuery = true)
     List<Article> findIncompleteArticles();
 }

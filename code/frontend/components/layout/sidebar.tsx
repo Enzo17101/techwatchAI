@@ -11,6 +11,7 @@ interface SidebarProps {
 export function Sidebar({ activeView, setActiveView }: SidebarProps) {
   return (
     <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full shrink-0">
+      {/* Brand Identity */}
       <div className="p-6 flex items-center gap-3">
         <div className="bg-blue-600 p-2 rounded-lg text-white">
           <Bot size={20} />
@@ -18,6 +19,7 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
         <span className="font-bold text-lg tracking-tight">TechWatch AI</span>
       </div>
 
+      {/* Main Navigation */}
       <nav className="flex-1 px-4 space-y-2">
         <button 
           onClick={() => setActiveView('feed')}
@@ -27,8 +29,9 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
           }`}
         >
-          <LayoutDashboard size={18} /> Actualités
+          <LayoutDashboard size={18} /> News Feed
         </button>
+        
         <button 
           onClick={() => setActiveView('chat')}
           className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-lg transition-all text-sm font-medium ${
@@ -37,13 +40,14 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
           }`}
         >
-          <MessageSquare size={18} /> Assistant IA
+          <MessageSquare size={18} /> AI Assistant
         </button>
       </nav>
 
+      {/* Footer Navigation */}
       <div className="p-4 mt-auto border-t border-slate-100 dark:border-slate-800">
         <button className="flex items-center gap-3 w-full px-4 py-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-sm font-medium">
-          <Settings size={18} /> Paramètres
+          <Settings size={18} /> Settings
         </button>
       </div>
     </aside>

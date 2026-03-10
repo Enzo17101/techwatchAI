@@ -14,7 +14,6 @@ public class PythonClient {
 
     private final RestClient restClient;
 
-    // On prépare l'URL de base (localhost:8000 pour l'instant)
     public PythonClient(@Value("${app.python-service.url:http://localhost:8000}") String pythonUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(pythonUrl)
@@ -22,28 +21,26 @@ public class PythonClient {
     }
 
     /**
-     * Appelle le service Python pour enrichir l'article.
-     * @Async : Cette méthode s'exécute dans un thread séparé.
-     * Le RssService n'attendra pas la fin de son exécution.
+     * Asynchronously triggers the Python worker to process and enrich an article.
+     *
+     * @param articleId the unique identifier of the article to process
      */
     @Async
     public void triggerEnrichment(UUID articleId) {
         String uri = "/api/v1/articles/" + articleId + "/process";
 
-        log.info("Async call to Python Worker for article: {}", articleId);
+        log.info("Triggering async enrichment via Python worker for article: {}", articleId);
 
         try {
-            // Appel POST sans corps (puisque l'ID est dans l'URL)
             restClient.post()
                     .uri(uri)
                     .retrieve()
-                    .toBodilessEntity(); // On ignore la réponse, on veut juste déclencher
+                    .toBodilessEntity();
 
-            log.debug("Python enrichment triggered successfully for {}", articleId);
+            log.debug("Enrichment successfully triggered for article: {}", articleId);
 
         } catch (Exception e) {
-            // En asynchrone, il est vital de logger les erreurs car personne ne les attrapera plus haut
-            log.error("Failed to call Python service for article {}: {}", articleId, e.getMessage());
+            log.error("Failed to trigger Python worker for article {}. Error: {}", articleId, e.getMessage());
         }
     }
 }

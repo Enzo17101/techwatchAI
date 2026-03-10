@@ -1,13 +1,13 @@
+import uuid
 from sqlalchemy import Column, String, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID
-from pgvector.sqlalchemy import Vector  # <--- Import crucial
-import uuid
+from pgvector.sqlalchemy import Vector
 from app.core.database import Base
 
 class Article(Base):
     """
-    Mirror of the 'articles' table created by Spring Boot (Java).
-    Includes the vector column for AI.
+    SQLAlchemy model representing the 'articles' table.
+    Shared with the Spring Boot orchestrator and includes pgvector support for semantic search.
     """
     __tablename__ = "articles"
 
@@ -20,5 +20,5 @@ class Article(Base):
     full_content = Column(Text, name="full_content")
     created_at = Column(DateTime, name="created_at")
 
-    # Nouvelle colonne pour stocker le vecteur (768 dimensions pour nomic-embed-text)
+    # Vector embeddings (768 dimensions optimized for the nomic-embed-text model)
     embedding = Column(Vector(768), name="embedding")
