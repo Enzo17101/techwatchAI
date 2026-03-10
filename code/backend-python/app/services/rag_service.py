@@ -1,48 +1,69 @@
 import logging
-import requests
-from bs4 import BeautifulSoup
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from app.services.ai_service import AiService
 
 logger = logging.getLogger(__name__)
 
-class ScraperService:
-    """
-    Service responsible for fetching and cleaning web page content.
-    """
+class RagService:
+    def __init__(self, db: Session):
+        self.db = db
+        self.ai_service = AiService()
+        # Maximum character limit per article to prevent LLM context window overflow
+        self.content_size = 4000
 
-    def scrape_url(self, url: str) -> dict:
+    def search_and_answer(self, question: str) -> str:
         """
-        Downloads the page at the given URL and extracts its main text content.
+        Executes the Retrieval-Augmented Generation (RAG) pipeline:
+        Vectorizes the query, retrieves similar articles via pgvector,
+        and generates a contextual answer using the LLM.
         """
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (compatible; TechWatch-AI/1.0; +http://localhost)"
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+        logger.info("Processing new RAG query: '%s'", question)
 
-            soup = BeautifulSoup(response.content, "lxml")
+        logger.debug("Generating vector embedding for the user query...")
+        question_vector = self.ai_service.generate_embedding(question)
 
-            # Remove non-content tags to prevent indexing noise
-            unwanted_tags = ["script", "style", "nav", "footer", "header", "aside", "iframe", "noscript"]
-            for tag in soup(unwanted_tags):
-                tag.decompose()
+        if not question_vector:
+            return "I'm sorry, I couldn't process your question at this time."
 
-            title = soup.title.string.strip() if soup.title else None
+        # Format vector for pgvector raw SQL compatibility
+        vector_str = f"[{','.join(map(str, question_vector))}]"
 
-            raw_text = soup.get_text(separator=" ", strip=True)
-            clean_text = " ".join(raw_text.split())
+        logger.debug("Performing semantic search in PostgreSQL...")
 
-            logger.info("Successfully scraped %s (%d chars)", url, len(clean_text))
+        # Retrieve the top 3 most relevant articles using L2 distance (<->)
+        query = text("""
+            SELECT title, source_name, full_content 
+            FROM articles 
+            WHERE embedding IS NOT NULL 
+            ORDER BY embedding <-> :vector 
+            LIMIT 3
+        """)
 
-            return {
-                "url": url,
-                "title": title,
-                "content": clean_text
-            }
+        results = self.db.execute(query, {"vector": vector_str}).fetchall()
 
-        except requests.RequestException as e:
-            logger.error("Network error while scraping %s: %s", url, e)
-            raise Exception(f"Failed to fetch URL: {str(e)}")
-        except Exception as e:
-            logger.error("Parsing error for %s: %s", url, e)
-            raise Exception(f"Failed to parse content: {str(e)}")
+        if not results:
+            logger.warning("No vectorized articles found in the database during semantic search.")
+            return "My knowledge base is currently empty or indexing. Please try again later."
+
+        logger.info("Found %d relevant articles. Building prompt context...", len(results))
+
+        context = ""
+        for row in results:
+            title, source, content = row[0], row[1], row[2]
+
+            # Enforce content truncation
+            if content and len(content) > self.content_size:
+                truncated_content = content[:self.content_size] + "..."
+            else:
+                truncated_content = content or ""
+
+            context += f"\n--- Article: {title} (Source: {source}) ---\n"
+            context += f"{truncated_content}\n"
+
+        logger.debug("Requesting contextual answer generation from the LLM...")
+        answer = self.ai_service.generate_answer(question, context)
+
+        logger.info("RAG response generated successfully.")
+        return answer
