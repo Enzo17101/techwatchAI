@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Représente un article récupéré via un flux RSS ou un site web.
+ * Represents an article retrieved via an RSS feed or a website.
  */
 @Entity
 @Table(name = "articles")
@@ -29,7 +29,7 @@ public class Article {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // L'URL est unique pour éviter les doublons lors des scans successifs
+    // The URL is unique to avoid duplicates during successive scans
     @Column(unique = true, nullable = false, length = 1024)
     private String link;
 
@@ -37,11 +37,11 @@ public class Article {
 
     private LocalDateTime pubDate;
 
-    // Champ pour le contenu complet une fois scrappé par le service Python
+    // Field for the full content once scraped by the Python service
     @Column(columnDefinition = "TEXT")
     private String fullContent;
 
-    // Audit : permet de savoir quand l'entrée a été créée en base
+    // Audit: allows knowing when the entry was created in the database
     private LocalDateTime createdAt;
 
     @PrePersist

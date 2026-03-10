@@ -1,37 +1,32 @@
-# ===================================================================
-# Configuration Spring Boot - TechWatch AI (Orchestrateur)
-# ===================================================================
-
 server:
-  port: 8080 # Port par défaut pour l'API Java
+  port: 8080
 
 spring:
   application:
     name: techwatch-orchestrator
 
   datasource:
-    # Connexion à la base de données PostgreSQL dans Docker
     url: jdbc:postgresql://localhost:5432/techwatchdb
     username: techwatch
     password: techwatchpass
     driver-class-name: org.postgresql.Driver
 
   jpa:
-    # Configuration Hibernate / JPA
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      # 'update' : Met à jour le schéma de la base de données automatiquement à partir de tes entités Java. 
-      # Pratique en développement, mais à bannir en production (on utilisera Flyway plus tard).
-      ddl-auto: update
-    
-    # Debugging : Affiche les requêtes SQL générées par Hibernate dans la console
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     show-sql: true
     properties:
       hibernate:
-        format_sql: true # Formate le SQL pour qu'il soit lisible
+        format_sql: true
 
-# Journalisation (Logs)
 logging:
   level:
-    org.hibernate.SQL: DEBUG # Pour voir le détail des requêtes
-    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    techwatch.ai.orchestrator: DEBUG
+
+app:
+  name: TechWatch-AI
+  version: 1.0.0
+  user-agent: ${app.name}/${app.version}

@@ -9,9 +9,10 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**") // Applique cette règle à toutes nos routes API
-                .allowedOrigins("http://localhost:3000") // Autorise notre Frontend Next.js
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Autorise ces actions
+        // Allow requests from the Next.js frontend application
+        registry.addMapping("/api/**")
+                .allowedOrigins("http://localhost:3000")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
