@@ -37,6 +37,8 @@ public class PythonClient {
                     .retrieve()
                     .toBodilessEntity();
 
+            
+
             log.debug("Enrichment successfully triggered for article: {}", articleId);
 
         } catch (Exception e) {

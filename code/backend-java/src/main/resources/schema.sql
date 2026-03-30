@@ -1,11 +1,8 @@
--- Ensure a clean state for initialization
-DROP TABLE IF EXISTS articles;
-
 -- Enable the pgvector extension for semantic search
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Create the main articles table supporting both metadata and vector embeddings
-CREATE TABLE articles (
+CREATE TABLE IF NOT EXISTS articles (
     id UUID PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,

@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -34,6 +35,9 @@ public class RssService {
 
     @Value("${app.user-agent:TechWatch-AI/1.0}")
     private String userAgent;
+
+    @Value("${app.rss.feeds}")
+    private List<String> rssFeeds;
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -95,7 +99,7 @@ public class RssService {
 
             articleRepository.save(newArticle);
             log.info("Persisted new article: {}. Triggering async AI enrichment.", newArticle.getTitle());
-            
+
             pythonClient.triggerEnrichment(newArticle.getId());
 
         } else {
@@ -110,15 +114,23 @@ public class RssService {
         if (date == null) {
             date = entry.getUpdatedDate();
         }
-        
-        return (date != null) 
-            ? date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() 
-            : LocalDateTime.now();
+
+        return (date != null)
+                ? date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                : LocalDateTime.now();
     }
+
 
     @Scheduled(initialDelay = 2000, fixedRate = 3600000)
     public void scheduleFeedUpdate() {
-        log.info("Initiating automatic RSS sweep...");
-        fetchRssFeed("https://www.lemondeinformatique.fr/flux-rss/thematique/toute-l-actualite/rss.xml");
+        log.info("Initiating automatic RSS sweep across {} configured feeds...", rssFeeds.size());
+
+        for (String feed : rssFeeds) {
+            try {
+                fetchRssFeed(feed.trim());
+            } catch (Exception e) {
+                log.error("Error during sweep for feed {}: {}", feed, e.getMessage());
+            }
+        }
     }
 }

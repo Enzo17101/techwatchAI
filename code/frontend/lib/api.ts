@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Java Orchestrator base URL configuration
-const JAVA_API_URL = process.env.NEXT_PUBLIC_JAVA_API_URL || 'http://localhost:8080/api';
+const JAVA_API_URL = process.env.NEXT_PUBLIC_JAVA_API_URL || 'http://100.115.206.65:8080/api';
 
 /**
  * Global Axios instance configured for backend communication.
