@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, User, Send, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -94,8 +95,17 @@ export function ChatInterface() {
               ? 'bg-blue-600 text-white rounded-tr-none' 
               : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-tl-none text-slate-800 dark:text-slate-100'
             }`}>
-              {m.content}
+              {m.role === 'assistant' ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none wrap-break-word">
+                  <ReactMarkdown>
+                    {m.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <span className="wrap-break-word">{m.content}</span>
+              )}
             </div>
+            
 
             {m.role === 'user' && (
               <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
