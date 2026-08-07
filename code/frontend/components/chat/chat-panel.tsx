@@ -129,7 +129,7 @@ export function ChatInterface() {
         <button 
           type="submit"
           disabled={!input.trim() || isLoading}
-          className="absolute right-6 top-1/2 -translate-y-1/2 p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+          className="absolute right-6 top-2.5 p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
         >
           <Send size={18} />
         </button>

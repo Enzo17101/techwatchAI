@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import logging
+import trafilatura
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -22,23 +23,33 @@ class ScraperService:
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()  # Raise exception for 4xx or 5xx errors
 
-            # 2. Parse HTML with BeautifulSoup (using lxml for speed)
-            soup = BeautifulSoup(response.content, "lxml")
+            # 2. Cleaning 1 : Proper extraction with Trafilatura
+            # include_comments=False supprime nativement les blocs de commentaires
+            clean_text = trafilatura.extract(
+                response.content,
+                include_comments=False,
+                include_tables=False,
+                no_fallback=False
+            )
 
-            # 3. CLEANING: Remove unwanted tags (scripts, styles, navbars, footers)
+            # 3. Cleaning 2 : Use BeautifulSoup if Trafilatura fail
             # This is crucial for RAG quality to avoid indexing Javascript code
-            for tag in soup(["script", "style", "nav", "footer", "header", "aside", "iframe", "noscript"]):
-                tag.decompose()  # Destroy the tag and its content
+
+            if not clean_text:
+                logger.warning(f"Trafilatura a retourné un résultat vide pour {url}, passage sur BeautifulSoup.")
+                soup = BeautifulSoup(response.content, "lxml")
+
+                for tag in soup(["script", "style", "nav", "footer", "header", "aside", "iframe", "noscript"]):
+                    tag.decompose() # Destroy the tag and its content
+
+                # Extract and clean text
+                raw_text = soup.get_text(separator=" ", strip=True)
+                clean_text = " ".join(raw_text.split())
+
 
             # 4. Extract Title
+            soup = BeautifulSoup(response.content, "lxml")
             title = soup.title.string.strip() if soup.title else None
-
-            # 5. Extract Text
-            # get_text with separator ensures words don't stick together when tags are removed
-            raw_text = soup.get_text(separator=" ", strip=True)
-
-            # Basic cleanup of multiple spaces
-            clean_text = " ".join(raw_text.split())
 
             logger.info(f"Successfully scraped {url} ({len(clean_text)} chars)")
 

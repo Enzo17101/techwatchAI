@@ -6,7 +6,7 @@ from app.api.endpoints import router as api_router
 app = FastAPI(
     title="TechWatch AI - Worker Service",
     description="Python microservice handling web scraping and RAG/AI processing",
-    version="1.0.0"
+    version="1.0.1"
 )
 
 # CORS Configuration
@@ -27,7 +27,7 @@ def read_root():
     return {
         "status": "online",
         "service": "techwatch-ai-worker",
-        "version": "1.0.0"
+        "version": app.version
     }
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ public class ResilienceService {
      * Background sweep job designed to find and retrigger articles that failed processing.
      * Runs every 2 hours, with an initial delay of 5 minutes after startup.
      */
-    @Scheduled(initialDelay = 300000, fixedRate = 7200000)
+    @Scheduled(initialDelay = 120000, fixedRate = 7200000)
     public void retryIncompleteArticles() {
         log.info("Starting resilience sweep: Scanning database for incomplete articles...");
 

@@ -567,3 +567,4 @@ server_files/docker-compose.yml
 code/backend-java/src/main/resources/application.yaml
 useful_commands.md
 docker-compose.yml
+code/backend-python/run.bat
