@@ -38,15 +38,15 @@ The system consists of three specialized services:
 
 ### **Real-Time News Monitoring Feed**
 <p align="center">
-  <img src="assets/monitoring-feed.png" alt="TechWatch AI News Feed" width="95%">
+  <img src="doc/assets/monitoring-feed.png" alt="TechWatch AI News Feed" width="95%">
 </p>
 
 ### **RAG Assistant in Action**
 <p align="center">
-  <img src="assets/rag-assistant-1.png" alt="TechWatch AI Chat Interface - Agent Thinking" width="95%">
+  <img src="doc/assets/rag-assistant-1.png" alt="TechWatch AI Chat Interface - Agent Thinking" width="95%">
 </p>
 <p align="center">
-  <img src="assets/rag-assistant-2.png" alt="TechWatch AI Chat Interface - Agent Answer" width="95%">
+  <img src="doc/assets/rag-assistant-2.png" alt="TechWatch AI Chat Interface - Agent Answer" width="95%">
 </p>
 
 ---
